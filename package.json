@@ -27,8 +27,7 @@
     "url": "git+https://github.com/sdstoehr/mcp-install-cli.git"
   },
   "publishConfig": {
-    "access": "public",
-    "provenance": true
+    "access": "public"
   },
   "scripts": {
     "build": "tsup",
