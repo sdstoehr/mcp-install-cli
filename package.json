@@ -1,6 +1,6 @@
 {
   "name": "@sdstoehr/mcp-install",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "One-command install of MCP servers into Claude Desktop and Claude Code, with {{placeholder}} prompts for secrets.",
   "keywords": [
     "mcp",
