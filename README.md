@@ -36,6 +36,7 @@ npx @sdstoehr/mcp-install <name> [options] --url <url>              # remote ser
 | `-f, --force` | Replace an existing server with the same name |
 | `--dry-run` | Show what would be written, change nothing |
 | `--config <path>` | Custom `claude_desktop_config.json` path |
+| `--unsafe-disable-tls-verification` | **Unsafe.** Sets `NODE_TLS_REJECT_UNAUTHORIZED=0` in the server's env so it accepts any TLS certificate (see below) |
 | `-y, --yes` | Skip the final confirmation |
 
 ### Placeholders
@@ -52,6 +53,12 @@ npx @sdstoehr/mcp-install acme \
 
 - **Claude Code** connects directly (`type: http`, or `sse` with `--transport sse`).
 - **Claude Desktop** only runs local servers, so the entry uses [`mcp-remote`](https://www.npmjs.com/package/mcp-remote) as a bridge. Header values are stored as env vars (`MCP_HEADER_AUTHORIZATION`) and referenced as `${…}` in the args, so secrets never appear on the command line.
+
+### Self-signed certificates
+
+`--unsafe-disable-tls-verification` adds `NODE_TLS_REJECT_UNAUTHORIZED=0` to the installed server's `env`, so the Node process behind it skips certificate checks. Use it only for local or test servers with a self-signed certificate: anyone on the network path can impersonate the server and read the traffic, including your tokens. The installer prints a warning when you use it.
+
+It works for local (stdio) servers and, in Claude Desktop, for `--url` servers (the `mcp-remote` bridge is a Node process). Claude Code connects to `--url` servers itself, so the flag has no effect there. For a better fix, trust your CA instead with `NODE_EXTRA_CA_CERTS=/path/to/ca.pem` via `--env`.
 
 ### Windows
 
