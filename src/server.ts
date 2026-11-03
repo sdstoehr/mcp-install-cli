@@ -13,6 +13,8 @@ export interface ServerEntry {
 
 type Values = Record<string, string>;
 
+export const TLS_ENV_NAME = 'NODE_TLS_REJECT_UNAUTHORIZED';
+
 // Package runners are .cmd shims on Windows and can't be spawned directly.
 const WINDOWS_SHIMS = new Set(['npx', 'npm', 'pnpm', 'pnpx', 'yarn', 'bunx']);
 
@@ -31,7 +33,7 @@ export function placeholdersOf(options: CliOptions): string[] {
  * Header values go into env vars and are referenced as ${VAR}, keeping secrets out of the args list.
  */
 export function buildDesktopEntry(options: CliOptions, values: Values, platform = process.platform): ServerEntry {
-  const env = resolveRecord(options.env, values);
+  const env = resolveEnv(options, values);
 
   if (options.url) {
     const args = ['-y', 'mcp-remote', resolveUrl(options.url, values)];
@@ -59,7 +61,7 @@ export function buildCodeEntry(options: CliOptions, values: Values, platform = p
 
   const command = substitute(options.command!, values);
   const args = options.commandArgs.map((arg) => substitute(arg, values));
-  return { type: 'stdio', ...withEnv(wrapForWindows(command, args, platform), resolveRecord(options.env, values)) };
+  return { type: 'stdio', ...withEnv(wrapForWindows(command, args, platform), resolveEnv(options, values)) };
 }
 
 export function headerEnvName(header: string): string {
@@ -68,6 +70,13 @@ export function headerEnvName(header: string): string {
 
 function resolveUrl(url: string, values: Values): string {
   return substitute(url, values, encodeURIComponent);
+}
+
+/** Server env plus, when requested, the Node switch that turns off TLS certificate checks. */
+function resolveEnv(options: CliOptions, values: Values): Record<string, string> {
+  const env = resolveRecord(options.env, values);
+  if (options.unsafeDisableTlsVerification) env[TLS_ENV_NAME] = '0';
+  return env;
 }
 
 function resolveRecord(record: Record<string, string>, values: Values): Record<string, string> {

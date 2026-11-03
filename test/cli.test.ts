@@ -125,6 +125,22 @@ describe('server entries', () => {
       env: { TOKEN: 'secret' },
     });
   });
+
+  it('only sets NODE_TLS_REJECT_UNAUTHORIZED when the unsafe flag is passed', () => {
+    expect(stdio.unsafeDisableTlsVerification).toBe(false);
+    expect(buildCodeEntry(stdio, values, 'darwin').env).not.toHaveProperty('NODE_TLS_REJECT_UNAUTHORIZED');
+
+    const insecure = parse(['gh', '-e', 'TOKEN={{token}}', '--unsafe-disable-tls-verification', '--', 'npx', 'server']);
+    expect(insecure.unsafeDisableTlsVerification).toBe(true);
+    expect(buildCodeEntry(insecure, values, 'darwin').env).toEqual({ TOKEN: 'secret', NODE_TLS_REJECT_UNAUTHORIZED: '0' });
+    expect(buildDesktopEntry(insecure, values, 'darwin').env).toEqual({ TOKEN: 'secret', NODE_TLS_REJECT_UNAUTHORIZED: '0' });
+  });
+
+  it('passes the TLS switch to the mcp-remote bridge in Claude Desktop only', () => {
+    const insecure = parse(['s', '--url', 'https://localhost/mcp', '--unsafe-disable-tls-verification']);
+    expect(buildDesktopEntry(insecure, {}, 'darwin').env).toEqual({ NODE_TLS_REJECT_UNAUTHORIZED: '0' });
+    expect(buildCodeEntry(insecure, {}, 'darwin')).not.toHaveProperty('env');
+  });
 });
 
 describe('Claude Desktop config', () => {

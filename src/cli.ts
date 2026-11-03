@@ -2,7 +2,7 @@ import * as p from '@clack/prompts';
 import { createRequire } from 'node:module';
 import { parseCliArgs, UsageError, type CliOptions, type Target } from './args.js';
 import { isSecretName, maskSecrets } from './placeholders.js';
-import { buildCodeEntry, buildDesktopEntry, placeholdersOf, type ServerEntry } from './server.js';
+import { buildCodeEntry, buildDesktopEntry, placeholdersOf, TLS_ENV_NAME, type ServerEntry } from './server.js';
 import { addCodeServer, codeAddArgs, isAlreadyExistsError, removeCodeServer } from './targets/code.js';
 import {
   defaultDesktopConfigPath,
@@ -36,6 +36,9 @@ Options:
   -f, --force                Overwrite an existing server with the same name
       --dry-run              Show what would be written, change nothing
       --config <path>        Path to claude_desktop_config.json
+      --unsafe-disable-tls-verification
+                             UNSAFE: set NODE_TLS_REJECT_UNAUTHORIZED=0 for the server, so it
+                             accepts any TLS certificate (self-signed, expired, MITM). Dev only
   -y, --yes                  Skip the final confirmation
   -h, --help                 Show this help
   -v, --version              Show the version
@@ -72,6 +75,9 @@ async function main(): Promise<void> {
   const interactive = Boolean(process.stdin.isTTY && process.stdout.isTTY);
 
   p.intro(`Install MCP server "${options.name}"`);
+  if (options.unsafeDisableTlsVerification) {
+    p.log.warn(`UNSAFE: ${TLS_ENV_NAME}=0 will be set for this server. It will not verify TLS certificates, so its connections can be intercepted. Use only for local development.`);
+  }
 
   const targets = await resolveTargets(options, interactive);
   const values = await resolvePlaceholders(options, interactive);
@@ -91,6 +97,9 @@ async function main(): Promise<void> {
     p.note(mask(JSON.stringify({ [options.name]: codeEntry }, null, 2)), `Claude Code → ${options.scope} scope`);
     if (options.url && Object.keys(options.env).length) {
       p.log.warn('Claude Code connects to remote servers directly, so --env is ignored there.');
+    }
+    if (options.url && options.unsafeDisableTlsVerification) {
+      p.log.warn('Claude Code connects to remote servers directly, so --unsafe-disable-tls-verification has no effect there.');
     }
     if (options.scope === 'project' && secrets.length) {
       p.log.warn('Project scope writes .mcp.json into this directory. Do not commit it, it contains your secrets.');

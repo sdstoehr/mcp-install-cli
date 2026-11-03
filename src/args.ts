@@ -19,6 +19,7 @@ export interface CliOptions {
   force: boolean;
   dryRun: boolean;
   yes: boolean;
+  unsafeDisableTlsVerification: boolean;
   configPath?: string;
 }
 
@@ -61,6 +62,7 @@ export function parseCliArgs(argv: string[]): ParseResult {
         scope: { type: 'string', short: 's' },
         force: { type: 'boolean', short: 'f' },
         'dry-run': { type: 'boolean' },
+        'unsafe-disable-tls-verification': { type: 'boolean' },
         config: { type: 'string' },
         yes: { type: 'boolean', short: 'y' },
         help: { type: 'boolean', short: 'h' },
@@ -126,6 +128,7 @@ export function parseCliArgs(argv: string[]): ParseResult {
       force: values.force ?? false,
       dryRun: values['dry-run'] ?? false,
       yes: values.yes ?? false,
+      unsafeDisableTlsVerification: values['unsafe-disable-tls-verification'] ?? false,
       configPath: values.config,
     },
   };
